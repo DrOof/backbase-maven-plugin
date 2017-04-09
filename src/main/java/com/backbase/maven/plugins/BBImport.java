@@ -40,13 +40,13 @@ public class BBImport
     /**
      * portalArchivePath
      */
-    @Parameter(property = "bbimport.portal.archive.path")
+    @Parameter(property = "bbimport.portal.archive.path", required = true)
     public String portalArchivePath;
 
-    @Parameter(property = "bbimport.portal.username", defaultValue = "admnin")
+    @Parameter(property = "bbimport.portal.username", defaultValue = "admin")
     public String username;
 
-    @Parameter(property = "bbimport.portal.password", defaultValue = "admnin")
+    @Parameter(property = "bbimport.portal.password", defaultValue = "admin")
     public String password;
 
     /**
