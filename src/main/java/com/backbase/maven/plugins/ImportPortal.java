@@ -3,21 +3,12 @@ package com.backbase.maven.plugins;
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
-import org.apache.http.HttpVersion;
 import org.apache.http.client.HttpClient;
-import org.apache.http.client.entity.EntityBuilder;
 import org.apache.http.client.fluent.Request;
-import org.apache.http.client.fluent.Response;
 import org.apache.http.client.methods.HttpPost;
-import org.apache.http.entity.ContentType;
-import org.apache.http.entity.FileEntity;
-import org.apache.http.entity.mime.*;
-import org.apache.http.entity.mime.content.ContentBody;
-import org.apache.http.entity.mime.content.StringBody;
+import org.apache.http.entity.mime.HttpMultipartMode;
+import org.apache.http.entity.mime.MultipartEntityBuilder;
 import org.apache.http.impl.client.HttpClientBuilder;
-import org.apache.http.message.BasicNameValuePair;
-import org.apache.http.protocol.RequestUserAgent;
-import org.apache.http.util.EntityUtils;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
@@ -28,41 +19,47 @@ import sun.misc.BASE64Encoder;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.util.Date;
+import java.net.MalformedURLException;
+import java.net.URL;
 
 /**
  * Goal which imports portal model.
  */
-@Mojo(name = "bb-import", defaultPhase = LifecyclePhase.PROCESS_SOURCES)
-public class BBImport
-        extends AbstractMojo {
-    /**
-     * portalArchivePath
-     */
-    @Parameter(property = "bbimport.portal.archive.path", required = true)
+@Mojo(name = "import-portal", defaultPhase = LifecyclePhase.PROCESS_SOURCES)
+public class ImportPortal extends AbstractMojo {
+
+    @Parameter(property = "portal-archive-path", required = true)
     public String portalArchivePath;
 
-    @Parameter(property = "bbimport.portal.username", defaultValue = "admin")
+    @Parameter(property = "portal-protocol", defaultValue = "http")
+    public String portalProtocol;
+
+    @Parameter(property = "portal-host", defaultValue = "localhost")
+    public String portalHost;
+
+    @Parameter(property = "portal-port", defaultValue = "7777")
+    public int portalPort;
+
+    @Parameter(property = "portal-context", defaultValue = "portalserver")
+    public String portalContext;
+
+    @Parameter(property = "portal-username", defaultValue = "admin")
     public String username;
 
-    @Parameter(property = "bbimport.portal.password", defaultValue = "admin")
+    @Parameter(property = "portal-password", defaultValue = "admin")
     public String password;
 
-    /**
-     * portalUrl
-     */
-    @Parameter(property = "bb-import.portal.url", defaultValue = "http://localhost:7777")
-    public String portalUrl;
+    public URL portalUrl;
 
     public void execute() throws MojoExecutionException, MojoFailureException {
+        buildPortalUrl();
         File file = new File(portalArchivePath);
         if (!file.exists()) {
             throw new MojoFailureException(portalArchivePath + " does not exists!");
         }
         try {
             String encodedUserPass = (new BASE64Encoder()).encode((username + ":" + password).getBytes());
-            String finalUrl = embedUserPassInURL(portalUrl) + "/portalserver/groups";
+            String finalUrl = embedUserPassInURL(portalUrl) + "/groups";
             HttpResponse getResponse = Request.Get(finalUrl)
                     .addHeader("Authorization", "Basic " + encodedUserPass)
                     .execute().returnResponse();
@@ -71,7 +68,7 @@ public class BBImport
             Header csrfToken = getResponse.getFirstHeader("X-BBXSRF");
             if (csrfToken == null)
                 csrfToken = getResponse.getFirstHeader("x-bbxsrf");
-            String uploadPath = "/portalserver/orchestrator/import/upload";
+            String uploadPath = "/orchestrator/import/upload";
             String serverUri = portalUrl + uploadPath;
 
             HttpClient httpclient = HttpClientBuilder.create().build();
@@ -94,7 +91,15 @@ public class BBImport
         }
     }
 
-    private String embedUserPassInURL(String url) {
-        return url.replace("http://", "http://" + username + ":" + password + "@");
+    private void buildPortalUrl() {
+        try {
+            portalUrl = new URL(portalProtocol, portalHost, portalPort, portalContext.startsWith("/") ? portalContext : "/" + portalContext);
+        } catch (MalformedURLException e) {
+            getLog().error("Creating Portal Url", e);
+        }
+    }
+
+    private String embedUserPassInURL(URL url) {
+        return url.toString().replaceFirst("://", "://" + username + ":" + password + "@");
     }
 }
