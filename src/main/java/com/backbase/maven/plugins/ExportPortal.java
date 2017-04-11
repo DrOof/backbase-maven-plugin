@@ -24,6 +24,13 @@ public class ExportPortal extends BaseMojo {
     @Parameter(property = "portal-archive-path", required = true)
     public String portalArchivePath;
 
+    @Parameter(property = "portal-name", required = true)
+    public String portalName;
+
+    private static final String exportPath = "/orchestrator/export/exportrequests";
+
+    private static final String portalExportParentPath = "/orchestrator/export/files/";
+
     private static final String exportRequestBody = "<exportRequest>" +
             "    <portalExportRequest>" +
             "        <portalName>%s</portalName>" +
@@ -31,11 +38,6 @@ public class ExportPortal extends BaseMojo {
             "        <includeGroups>false</includeGroups>" +
             "    </portalExportRequest>" +
             "</exportRequest>";
-
-    private static final String exportPath = "/orchestrator/export/exportrequests";
-
-    @Parameter(property = "portal-name", required = true)
-    public String portalName;
 
     @Override
     public void execute() throws MojoFailureException, MojoExecutionException {
@@ -66,9 +68,7 @@ public class ExportPortal extends BaseMojo {
         InputSource inputSource = new InputSource(new StringReader(xmlResp));
         Document doc = dBuilder.parse(inputSource);
         String identifier = doc.getElementsByTagName("identifier").item(0).getTextContent();
-
-        String downloadUrl = portalUrl + "/orchestrator/export/files/" + identifier;
-
+        String downloadUrl = portalUrl + portalExportParentPath + identifier;
         Request.Get(downloadUrl)
                 .addHeader("Cookie", cookies.getValue())
                 .addHeader("X-BBXSRF", csrfToken.getValue())
