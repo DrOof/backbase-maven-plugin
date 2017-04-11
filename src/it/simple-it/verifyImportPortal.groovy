@@ -8,4 +8,6 @@ importPortal.portalProtocol="http"
 importPortal.portalHost="localhost"
 importPortal.portalPort=7777
 importPortal.portalContext="portalserver"
+
 importPortal.execute()
+
