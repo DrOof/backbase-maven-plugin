@@ -21,11 +21,17 @@ import java.io.StringReader;
 @Mojo(name = "export-portal", defaultPhase = LifecyclePhase.PROCESS_SOURCES)
 public class ExportPortal extends BaseMojo {
 
-    @Parameter(property = "portal-archive-path", required = true)
-    public String portalArchivePath;
+    /**
+     * target folder where the file be exported
+     */
+    @Parameter(property = "target", required = true)
+    public String target;
 
-    @Parameter(property = "portal-name", required = true)
-    public String portalName;
+    /**
+     * portal name
+     */
+    @Parameter(property = "portal", required = true)
+    public String portal;
 
     private static final String exportPath = "/orchestrator/export/exportrequests";
 
@@ -34,10 +40,22 @@ public class ExportPortal extends BaseMojo {
     private static final String exportRequestBody = "<exportRequest>" +
             "    <portalExportRequest>" +
             "        <portalName>%s</portalName>" +
-            "        <includeContent>false</includeContent>" +
-            "        <includeGroups>false</includeGroups>" +
+            "        <includeContent>%s</includeContent>" +
+            "        <includeGroups>%s</includeGroups>" +
             "    </portalExportRequest>" +
             "</exportRequest>";
+
+    /**
+     * include contents stuff in exported zip file
+     */
+    @Parameter(property = "includeContents", required = false, defaultValue = "true")
+    public String includeContents;
+
+    /**
+     * include group information in exported zip file
+     */
+    @Parameter(property = "includeGroups", required = false, defaultValue = "true")
+    public String includeGroups;
 
     @Override
     public void execute() throws MojoFailureException, MojoExecutionException {
@@ -54,8 +72,8 @@ public class ExportPortal extends BaseMojo {
     private void export() throws IOException, ParserConfigurationException, SAXException {
         String exportUrl = portalUrl + exportPath;
 
-        File file = new File(portalArchivePath);
-        String reqBody = String.format(exportRequestBody, portalName);
+        File file = new File(target);
+        String reqBody = String.format(exportRequestBody, portal, includeContents, includeGroups);
         String xmlResp = Request.Post(exportUrl)
                 .bodyString(reqBody, ContentType.TEXT_XML)
                 .addHeader("Cookie", cookies.getValue())
