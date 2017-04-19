@@ -19,22 +19,22 @@ public abstract class BaseMojo extends AbstractMojo {
 
     static final HttpClient httpclient = HttpClientBuilder.create().build();
 
-    @Parameter(property = "portal-protocol", defaultValue = "http")
+    @Parameter(property = "portal.protocol", defaultValue = "http")
     public String portalProtocol;
 
-    @Parameter(property = "portal-host", defaultValue = "localhost")
+    @Parameter(property = "portal.host", defaultValue = "localhost")
     public String portalHost;
 
-    @Parameter(property = "portal-port", defaultValue = "7777")
+    @Parameter(property = "portal.port", defaultValue = "7777")
     public int portalPort;
 
-    @Parameter(property = "portal-context", defaultValue = "portalserver")
+    @Parameter(property = "portal.context", defaultValue = "portalserver")
     public String portalContext;
 
-    @Parameter(property = "portal-username", defaultValue = "admin")
+    @Parameter(property = "portal.username", defaultValue = "admin")
     public String username;
 
-    @Parameter(property = "portal-password", defaultValue = "admin")
+    @Parameter(property = "portal.password", defaultValue = "admin")
     public String password;
 
     URL portalUrl;
