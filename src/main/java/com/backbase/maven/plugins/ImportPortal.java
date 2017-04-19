@@ -2,9 +2,11 @@ package com.backbase.maven.plugins;
 
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
+import org.apache.http.StatusLine;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.mime.HttpMultipartMode;
 import org.apache.http.entity.mime.MultipartEntityBuilder;
+import org.apache.http.util.EntityUtils;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugins.annotations.LifecyclePhase;
@@ -39,7 +41,7 @@ public class ImportPortal extends BaseMojo {
         }
     }
 
-    private void upload(File file) throws IOException {
+    private void upload(File file) throws IOException, MojoExecutionException {
         String importUrl = portalUrl + importPath;
         HttpPost httpPost = new HttpPost(importUrl);
         HttpEntity reqEntity = MultipartEntityBuilder
@@ -51,6 +53,15 @@ public class ImportPortal extends BaseMojo {
 
         httpPost.setHeader("Cookie", cookies.getValue());
         httpPost.setHeader("X-BBXSRF", csrfToken.getValue());
-        httpclient.execute(httpPost);
+        HttpResponse httpResponse = httpclient.execute(httpPost);
+        int statusCode = httpResponse.getStatusLine().getStatusCode();
+        if (statusCode >= 400) {
+//            getLog().error("Failed with " + statusCode + " response code");
+            String content = EntityUtils.toString(httpResponse.getEntity(), "UTF-8");
+            getLog().error(content);
+            throw new MojoExecutionException(content);
+        }
+        else
+            getLog().info("Succeeded with " + statusCode + " response code");
     }
 }
