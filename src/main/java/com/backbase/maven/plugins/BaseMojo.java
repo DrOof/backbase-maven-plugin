@@ -5,10 +5,12 @@ import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.fluent.Request;
 import org.apache.http.impl.client.HttpClientBuilder;
+import org.apache.http.util.EntityUtils;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugins.annotations.Parameter;
+import org.codehaus.plexus.util.StringUtils;
 import sun.misc.BASE64Encoder;
 
 import java.io.IOException;
@@ -17,7 +19,7 @@ import java.net.URL;
 
 public abstract class BaseMojo extends AbstractMojo {
 
-    static final HttpClient httpclient = HttpClientBuilder.create().build();
+    HttpClient httpclient = HttpClientBuilder.create().build();
 
     @Parameter(property = "portal.protocol", defaultValue = "http")
     public String portalProtocol;
@@ -66,4 +68,15 @@ public abstract class BaseMojo extends AbstractMojo {
             throw new MojoExecutionException("Creating Portal Url", e);
         }
     }
+
+    void handleResponse(HttpResponse resp) throws IOException, MojoExecutionException {
+        int statusCode = resp.getStatusLine().getStatusCode();
+        if (statusCode >= 400) {
+            String content = EntityUtils.toString(resp.getEntity(), "UTF-8");
+            getLog().error(content);
+            throw new MojoExecutionException(content);
+        } else
+            getLog().info("Succeeded with " + statusCode + " response code");
+    }
+
 }

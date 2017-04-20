@@ -54,14 +54,6 @@ public class ImportPortal extends BaseMojo {
         httpPost.setHeader("Cookie", cookies.getValue());
         httpPost.setHeader("X-BBXSRF", csrfToken.getValue());
         HttpResponse httpResponse = httpclient.execute(httpPost);
-        int statusCode = httpResponse.getStatusLine().getStatusCode();
-        if (statusCode >= 400) {
-//            getLog().error("Failed with " + statusCode + " response code");
-            String content = EntityUtils.toString(httpResponse.getEntity(), "UTF-8");
-            getLog().error(content);
-            throw new MojoExecutionException(content);
-        }
-        else
-            getLog().info("Succeeded with " + statusCode + " response code");
+        handleResponse(httpResponse);
     }
 }
