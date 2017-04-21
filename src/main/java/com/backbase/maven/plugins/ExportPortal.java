@@ -1,12 +1,17 @@
 package com.backbase.maven.plugins;
 
-import org.apache.http.client.fluent.Request;
+import org.apache.http.HttpResponse;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.ContentType;
+import org.apache.http.entity.StringEntity;
+import org.apache.http.util.EntityUtils;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
+import org.codehaus.plexus.util.IOUtil;
 import org.w3c.dom.Document;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
@@ -14,9 +19,7 @@ import org.xml.sax.SAXException;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
-import java.io.File;
-import java.io.IOException;
-import java.io.StringReader;
+import java.io.*;
 
 @Mojo(name = "export-portal", defaultPhase = LifecyclePhase.PROCESS_SOURCES)
 public class ExportPortal extends BaseMojo {
@@ -64,6 +67,7 @@ public class ExportPortal extends BaseMojo {
         try {
             login();
             export();
+            cleanup();
         } catch (IOException | ParserConfigurationException | SAXException e) {
             throw new MojoExecutionException("" + e);
         }
@@ -74,23 +78,29 @@ public class ExportPortal extends BaseMojo {
 
         File file = new File(target);
         String reqBody = String.format(exportRequestBody, portal, includeContents, includeGroups);
-        String xmlResp = Request.Post(exportUrl)
-                .bodyString(reqBody, ContentType.TEXT_XML)
-                .addHeader("Cookie", cookies.getValue())
-                .addHeader("X-BBXSRF", csrfToken.getValue())
-                .execute()
-                .returnContent()
-                .asString();
+        HttpPost httpPost = new HttpPost(exportUrl);
+        httpPost.setHeader("Cookie", cookies.getValue());
+        httpPost.setHeader("X-BBXSRF", csrfToken.getValue());
+        httpPost.setEntity(new StringEntity(reqBody, ContentType.TEXT_XML));
+
         DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
         DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
-        InputSource inputSource = new InputSource(new StringReader(xmlResp));
+
+        HttpResponse response = httpclient.execute(httpPost);
+        StringReader stringReader = new StringReader(EntityUtils.toString(response.getEntity()));
+        InputSource inputSource = new InputSource(stringReader);
         Document doc = dBuilder.parse(inputSource);
         String identifier = doc.getElementsByTagName("identifier").item(0).getTextContent();
         String downloadUrl = portalUrl + portalExportParentPath + identifier;
-        Request.Get(downloadUrl)
-                .addHeader("Cookie", cookies.getValue())
-                .addHeader("X-BBXSRF", csrfToken.getValue())
-                .execute()
-                .saveContent(file);
+
+        HttpGet httpGet = new HttpGet(downloadUrl);
+        httpGet.addHeader("Cookie", cookies.getValue());
+        httpGet.addHeader("X-BBXSRF", csrfToken.getValue());
+        HttpResponse httpResponse = httpclient.execute(httpGet);
+        InputStream inputStream = httpResponse.getEntity().getContent();
+        OutputStream outputStream = new FileOutputStream(file);
+        IOUtil.copy(inputStream, outputStream);
+        outputStream.close();
+        httpGet.releaseConnection();
     }
 }

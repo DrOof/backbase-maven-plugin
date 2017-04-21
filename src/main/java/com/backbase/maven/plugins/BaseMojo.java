@@ -1,17 +1,19 @@
 package com.backbase.maven.plugins;
 
+import org.apache.commons.codec.binary.Base64;
 import org.apache.http.Header;
 import org.apache.http.HttpResponse;
+import org.apache.http.client.CookieStore;
 import org.apache.http.client.HttpClient;
-import org.apache.http.client.fluent.Request;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpRequestBase;
+import org.apache.http.impl.client.BasicCookieStore;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.util.EntityUtils;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugins.annotations.Parameter;
-import org.codehaus.plexus.util.StringUtils;
-import sun.misc.BASE64Encoder;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
@@ -19,7 +21,8 @@ import java.net.URL;
 
 public abstract class BaseMojo extends AbstractMojo {
 
-    HttpClient httpclient = HttpClientBuilder.create().build();
+    HttpClient httpclient;
+    CookieStore httpCookieStore;
 
     @Parameter(property = "portal.protocol", defaultValue = "http")
     public String portalProtocol;
@@ -45,20 +48,33 @@ public abstract class BaseMojo extends AbstractMojo {
 
     Header csrfToken;
 
+    BaseMojo() {
+        httpCookieStore = new BasicCookieStore();
+        HttpClientBuilder builder = HttpClientBuilder.create().setDefaultCookieStore(httpCookieStore);
+        httpclient = builder.build();
+    }
+
     public void execute() throws MojoExecutionException, MojoFailureException {
     }
 
-    void login() throws IOException {
-        String encodedUserPass = (new BASE64Encoder()).encode((username + ":" + password).getBytes());
-        HttpResponse getResponse = Request.Get(portalUrl + "/groups")
-                .addHeader("Authorization", "Basic " + encodedUserPass)
-                .execute()
-                .returnResponse();
+    void cleanup() {
+        httpCookieStore.clear();
+    }
 
-        cookies = getResponse.getFirstHeader("Set-Cookie");
-        csrfToken = getResponse.getFirstHeader("X-BBXSRF");
+    void login() throws IOException {
+        httpCookieStore.clear();
+        String encodedUserPass = (new Base64()).encodeAsString((username + ":" + password).getBytes());
+        HttpGet httpGet= new HttpGet(portalUrl + "/groups");
+        httpGet.addHeader("Authorization", "Basic " + encodedUserPass);
+        HttpResponse httpResponse = httpclient.execute(httpGet);
+        refreshCookies(httpResponse);
+    }
+
+    private void refreshCookies(HttpResponse response) {
+        cookies = response.getFirstHeader("Set-Cookie");
+        csrfToken = response.getFirstHeader("X-BBXSRF");
         if (csrfToken == null)
-            csrfToken = getResponse.getFirstHeader("x-bbxsrf");
+            csrfToken = response.getFirstHeader("x-bbxsrf");
     }
 
     void buildPortalUrl() throws MojoExecutionException {
@@ -69,14 +85,17 @@ public abstract class BaseMojo extends AbstractMojo {
         }
     }
 
-    void handleResponse(HttpResponse resp) throws IOException, MojoExecutionException {
-        int statusCode = resp.getStatusLine().getStatusCode();
+    void handleResponse(HttpResponse response, HttpRequestBase request) throws IOException, MojoExecutionException {
+        int statusCode = response.getStatusLine().getStatusCode();
         if (statusCode >= 400) {
-            String content = EntityUtils.toString(resp.getEntity(), "UTF-8");
+            String content = EntityUtils.toString(response.getEntity(), "UTF-8");
             getLog().error(content);
             throw new MojoExecutionException(content);
-        } else
+        } else {
             getLog().info("Succeeded with " + statusCode + " response code");
+            refreshCookies(response);
+        }
+        request.releaseConnection();
     }
 
 }

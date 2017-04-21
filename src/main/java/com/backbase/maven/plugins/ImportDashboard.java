@@ -1,8 +1,9 @@
 package com.backbase.maven.plugins;
 
 import org.apache.http.HttpResponse;
-import org.apache.http.client.fluent.Request;
+import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.ContentType;
+import org.apache.http.entity.StringEntity;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugins.annotations.LifecyclePhase;
@@ -25,6 +26,7 @@ public class ImportDashboard extends BaseMojo {
         try {
             login();
             uploadWidgets();
+            cleanup();
         } catch (IOException e) {
             throw new MojoExecutionException("Error in Portal Rest Call " + e);
         }
@@ -33,13 +35,12 @@ public class ImportDashboard extends BaseMojo {
     private void uploadWidgets() throws IOException, MojoExecutionException {
         String importUrl = portalUrl + importPath;
 
-        HttpResponse resp = Request.Post(importUrl)
-                .bodyString("BBXSRF=" + csrfToken.getValue() + basicWidgetList, ContentType.APPLICATION_FORM_URLENCODED)
-                .addHeader("Cookie", cookies.getValue())
-                .addHeader("X-BBXSRF", csrfToken.getValue())
-                .execute()
-                .returnResponse();
-        handleResponse(resp);
+        HttpPost httpPost = new HttpPost(importUrl);
+        httpPost.setEntity(new StringEntity("BBXSRF=" + csrfToken.getValue() + basicWidgetList, ContentType.APPLICATION_FORM_URLENCODED));
+        httpPost.addHeader("Cookie", cookies.getValue());
+        httpPost.addHeader("X-BBXSRF", csrfToken.getValue());
+        HttpResponse response = httpclient.execute(httpPost);
+        handleResponse(response, httpPost);
     }
 
 }
