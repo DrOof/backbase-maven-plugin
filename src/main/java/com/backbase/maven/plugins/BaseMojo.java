@@ -17,6 +17,7 @@ import org.apache.maven.plugin.prefix.PluginPrefixResolver;
 import org.apache.maven.plugin.version.PluginVersionResolver;
 import org.apache.maven.plugins.annotations.Component;
 import org.apache.maven.plugins.annotations.Parameter;
+import org.apache.maven.project.MavenProject;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
@@ -26,6 +27,9 @@ public abstract class BaseMojo extends AbstractMojo {
 
     HttpClient httpclient;
     CookieStore httpCookieStore;
+
+    @Parameter(readonly = true, defaultValue = "${project}")
+    protected MavenProject project;
 
     @Component
     protected PluginPrefixResolver pluginPrefixResolver;

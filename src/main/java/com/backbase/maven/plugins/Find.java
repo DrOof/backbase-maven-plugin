@@ -11,9 +11,10 @@ import static java.nio.file.FileVisitResult.*;
 import java.util.*;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
+import java.util.zip.ZipOutputStream;
 
 
-public class FileUtil {
+public class Find {
 
     private static class Finder
             extends SimpleFileVisitor< Path > {
@@ -82,63 +83,6 @@ public class FileUtil {
         Finder finder = new Finder( pattern );
         Files.walkFileTree( Paths.get( path ), finder );
         return finder.search();
-    }
-
-    /**
-     * Unzip it
-     *
-     * @param zipFile input zip file
-     * @param output  zip file output folder
-     */
-    public static void unZipIt( String zipFile, String output ) throws MojoFailureException {
-
-        byte[] buffer = new byte[ 1024 ];
-
-        try {
-
-            //create output directory is not exists
-            File folder = new File( output );
-            if ( !folder.exists() ) {
-                folder.mkdir();
-            }
-
-            //get the zip file content
-            ZipInputStream zis =
-                    new ZipInputStream( new FileInputStream( zipFile ) );
-            //get the zipped file list entry
-            ZipEntry ze = zis.getNextEntry();
-
-            while ( ze != null ) {
-
-                String fileName = ze.getName();
-                File newFile = Paths.get( output, fileName ).toFile();
-                if ( fileName.endsWith( "/" ) ) {
-                    Files.createDirectory( newFile.toPath() );
-                } else {
-                    System.out.println( "file unzip : " + newFile.getAbsoluteFile() );
-
-                    //create all non exists folders
-                    //else you will hit FileNotFoundException for compressed folder
-                    boolean mkdirs = new File( newFile.getParent() ).mkdirs();
-
-                    FileOutputStream fos = new FileOutputStream( newFile );
-
-                    int len;
-                    while ( ( len = zis.read( buffer ) ) > 0 ) {
-                        fos.write( buffer, 0, len );
-                    }
-
-                    fos.close();
-                }
-                ze = zis.getNextEntry();
-            }
-
-            zis.closeEntry();
-            zis.close();
-
-        } catch ( IOException ex ) {
-            throw new MojoFailureException( ex, "Unzip failed", ex.getMessage() );
-        }
     }
 
 }

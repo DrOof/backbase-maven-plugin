@@ -9,13 +9,12 @@ import org.apache.http.entity.StringEntity;
 import org.apache.http.util.EntityUtils;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
-import org.apache.maven.plugin.prefix.PluginPrefixResolver;
-import org.apache.maven.plugin.version.PluginVersionResolver;
 import org.apache.maven.plugins.annotations.*;
 import org.codehaus.plexus.util.IOUtil;
 import org.w3c.dom.Document;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
+import org.zeroturnaround.zip.ZipUtil;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -27,7 +26,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
-@Mojo(name = "export-portal", requiresDependencyResolution = ResolutionScope.COMPILE_PLUS_RUNTIME, threadSafe = true)
+@Mojo( name = "export-portal", requiresDependencyResolution = ResolutionScope.COMPILE_PLUS_RUNTIME, threadSafe = true )
 public class ExportPortal extends BaseMojo {
 
     /**
@@ -85,9 +84,9 @@ public class ExportPortal extends BaseMojo {
     }
 
     private void unzip() throws MojoFailureException, IOException {
-        FileUtil.unZipIt( target + ".zip", target );
+        ZipUtil.unpack( Paths.get( target + ".zip" ).toFile(), Paths.get( target ).toFile() );
         Files.delete( Paths.get( target + ".zip" ) );
-        List< Path > portalExports = FileUtil.Search( "Portal*", target, 1 );
+        List< Path > portalExports = Find.Search( "Portal*", target, 1 );
 
         Collections.sort( portalExports, new Comparator< Path >() {
             public int compare( Path o1, Path o2 ) {
@@ -103,9 +102,9 @@ public class ExportPortal extends BaseMojo {
 
         Files.move( portalExports.get( 0 ), Paths.get( Paths.get( target ).toString(), artifactId ), StandardCopyOption.REPLACE_EXISTING );
 
-        List< Path > zipFiles = FileUtil.Search( "*.zip", target );
+        List< Path > zipFiles = Find.Search( "*.zip", target );
         for ( Path zipFile : zipFiles ) {
-            FileUtil.unZipIt( zipFile.toString(), zipFile.toString().replace( ".zip", "" ) );
+            ZipUtil.unpack( zipFile.toFile(), Paths.get( zipFile.toString().replace( ".zip", "" ) ).toFile() );
             Files.delete( zipFile );
         }
         getLog().info( "Unzip the downloaded portal finished" );
@@ -113,7 +112,7 @@ public class ExportPortal extends BaseMojo {
 
     private void export() throws IOException, ParserConfigurationException, SAXException {
         String exportUrl = portalUrl + exportPath;
-        FileUtils.forceDelete(new File(target));
+        FileUtils.forceDelete( new File( target ) );
         File file = new File( target + ".zip" );
         String reqBody = String.format( exportRequestBody, portalName, includeContents, includeGroups );
         HttpPost httpPost = new HttpPost( exportUrl );
