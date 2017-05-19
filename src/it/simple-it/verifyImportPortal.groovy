@@ -1,7 +1,7 @@
 import com.backbase.maven.plugins.ImportPortal
 
 def importPortal = new ImportPortal()
-importPortal.portalArchivePath= "/Users/jahan/Documents/Portal-test-13f72a2f-be51-4b82-a03c-736ab0063601.zip"
+importPortal.portalArchivePath= "/Users/jahan/Downloads/Portal-business-82f166ef-de61-47bf-a4ca-1038e67ca168.zip"
 importPortal.username="admin"
 importPortal.password="admin"
 importPortal.portalProtocol="http"

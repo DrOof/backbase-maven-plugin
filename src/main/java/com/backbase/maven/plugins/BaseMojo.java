@@ -54,8 +54,7 @@ public abstract class BaseMojo extends AbstractMojo {
         httpclient = builder.build();
     }
 
-    public void execute() throws MojoExecutionException, MojoFailureException {
-    }
+    public abstract void execute() throws MojoExecutionException, MojoFailureException;
 
     void cleanup() {
         httpCookieStore.clear();
