@@ -13,6 +13,9 @@ import org.apache.http.util.EntityUtils;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
+import org.apache.maven.plugin.prefix.PluginPrefixResolver;
+import org.apache.maven.plugin.version.PluginVersionResolver;
+import org.apache.maven.plugins.annotations.Component;
 import org.apache.maven.plugins.annotations.Parameter;
 
 import java.io.IOException;
@@ -23,6 +26,12 @@ public abstract class BaseMojo extends AbstractMojo {
 
     HttpClient httpclient;
     CookieStore httpCookieStore;
+
+    @Component
+    protected PluginPrefixResolver pluginPrefixResolver;
+
+    @Component
+    protected PluginVersionResolver pluginVersionResolver;
 
     @Parameter(property = "portal.protocol", defaultValue = "http")
     public String portalProtocol;

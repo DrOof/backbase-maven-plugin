@@ -8,9 +8,9 @@ exportPortal.portalProtocol="http"
 exportPortal.portalHost="localhost"
 exportPortal.portalPort=7777
 exportPortal.portalContext="portalserver"
-exportPortal.portal="business"
+exportPortal.portalName="business"
 exportPortal.includeContents="true"
 exportPortal.includeGroups="true"
-exportPortal.artifact="portal-business-1.0-SNAPSHOT"
+exportPortal.artifactId="portal-business-1.0-SNAPSHOT"
 exportPortal.execute()
 

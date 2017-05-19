@@ -1,5 +1,6 @@
 package com.backbase.maven.plugins;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
@@ -8,9 +9,9 @@ import org.apache.http.entity.StringEntity;
 import org.apache.http.util.EntityUtils;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
-import org.apache.maven.plugins.annotations.LifecyclePhase;
-import org.apache.maven.plugins.annotations.Mojo;
-import org.apache.maven.plugins.annotations.Parameter;
+import org.apache.maven.plugin.prefix.PluginPrefixResolver;
+import org.apache.maven.plugin.version.PluginVersionResolver;
+import org.apache.maven.plugins.annotations.*;
 import org.codehaus.plexus.util.IOUtil;
 import org.w3c.dom.Document;
 import org.xml.sax.InputSource;
@@ -25,9 +26,8 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
-import java.util.UUID;
 
-@Mojo( name = "export-portal", defaultPhase = LifecyclePhase.PROCESS_SOURCES )
+@Mojo(name = "export-portal", requiresDependencyResolution = ResolutionScope.COMPILE_PLUS_RUNTIME, threadSafe = true)
 public class ExportPortal extends BaseMojo {
 
     /**
@@ -39,11 +39,11 @@ public class ExportPortal extends BaseMojo {
     /**
      * portal name
      */
-    @Parameter( property = "portal", required = true )
-    public String portal;
+    @Parameter( property = "portalName", required = true )
+    public String portalName;
 
-    @Parameter( property = "artifact", required = true )
-    public String artifact;
+    @Parameter( property = "artifactId", required = true )
+    public String artifactId;
 
     private static final String exportPath = "/orchestrator/export/exportrequests";
 
@@ -101,7 +101,7 @@ public class ExportPortal extends BaseMojo {
             }
         } );
 
-        Files.move( portalExports.get( 0 ), Paths.get( Paths.get( target ).toString(), artifact ), StandardCopyOption.REPLACE_EXISTING );
+        Files.move( portalExports.get( 0 ), Paths.get( Paths.get( target ).toString(), artifactId ), StandardCopyOption.REPLACE_EXISTING );
 
         List< Path > zipFiles = FileUtil.Search( "*.zip", target );
         for ( Path zipFile : zipFiles ) {
@@ -113,9 +113,9 @@ public class ExportPortal extends BaseMojo {
 
     private void export() throws IOException, ParserConfigurationException, SAXException {
         String exportUrl = portalUrl + exportPath;
-
+        FileUtils.forceDelete(new File(target));
         File file = new File( target + ".zip" );
-        String reqBody = String.format( exportRequestBody, portal, includeContents, includeGroups );
+        String reqBody = String.format( exportRequestBody, portalName, includeContents, includeGroups );
         HttpPost httpPost = new HttpPost( exportUrl );
         httpPost.setHeader( "Cookie", cookies.getValue() );
         httpPost.setHeader( "X-BBXSRF", csrfToken.getValue() );
