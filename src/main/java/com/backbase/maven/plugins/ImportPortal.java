@@ -14,7 +14,10 @@ import org.zeroturnaround.zip.ZipUtil;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.List;
 import java.util.UUID;
 
@@ -31,6 +34,9 @@ public class ImportPortal extends BaseMojo {
 
     @Parameter( property = "artifactId", required = true )
     public String artifactId;
+
+    @Parameter( property = "includeContents", defaultValue = "true" )
+    public Boolean includeContents;
 
     String outputDir;
     String parentSrc;
@@ -87,7 +93,8 @@ public class ImportPortal extends BaseMojo {
                 break;
             }
         }
-        ZipUtil.pack( Paths.get( portalSrc, artifactId, "contentservices" ).toFile(), Paths.get( innerTmpDir, "contentservices.zip" ).toFile() );
+        if ( includeContents )
+            ZipUtil.pack( Paths.get( portalSrc, artifactId, "contentservices" ).toFile(), Paths.get( innerTmpDir, "contentservices.zip" ).toFile() );
         Files.copy( Paths.get( portalSrc, artifactId, "portalserver.xml" ), Paths.get( innerTmpDir, "portalserver.xml" ), StandardCopyOption.REPLACE_EXISTING );
         Files.copy( Paths.get( portalSrc, "metadata.xml" ), Paths.get( tmpDir, "metadata.xml" ), StandardCopyOption.REPLACE_EXISTING );
         ZipUtil.pack( Paths.get( tmpDir ).toFile(), Paths.get( outputDir, finalName + ".zip" ).toFile() );
