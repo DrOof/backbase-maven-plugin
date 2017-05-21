@@ -35,9 +35,6 @@ public class ImportPortal extends BaseMojo {
     @Parameter( property = "artifactId", required = true )
     public String artifactId;
 
-    @Parameter( property = "includeContents", defaultValue = "true" )
-    public Boolean includeContents;
-
     String outputDir;
     String parentSrc;
     String finalName;
@@ -93,8 +90,7 @@ public class ImportPortal extends BaseMojo {
                 break;
             }
         }
-        if ( includeContents )
-            ZipUtil.pack( Paths.get( portalSrc, artifactId, "contentservices" ).toFile(), Paths.get( innerTmpDir, "contentservices.zip" ).toFile() );
+        ZipUtil.pack( Paths.get( portalSrc, artifactId, "contentservices" ).toFile(), Paths.get( innerTmpDir, "contentservices.zip" ).toFile() );
         Files.copy( Paths.get( portalSrc, artifactId, "portalserver.xml" ), Paths.get( innerTmpDir, "portalserver.xml" ), StandardCopyOption.REPLACE_EXISTING );
         Files.copy( Paths.get( portalSrc, "metadata.xml" ), Paths.get( tmpDir, "metadata.xml" ), StandardCopyOption.REPLACE_EXISTING );
         ZipUtil.pack( Paths.get( tmpDir ).toFile(), Paths.get( outputDir, finalName + ".zip" ).toFile() );
