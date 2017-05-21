@@ -32,8 +32,8 @@ public class ExportPortal extends BaseMojo {
     /**
      * target folder where the file be exported
      */
-    @Parameter( property = "target", required = true )
-    public String target;
+    @Parameter( property = "portal.src", required = true )
+    public String portalSrc;
 
     /**
      * portal name
@@ -84,9 +84,9 @@ public class ExportPortal extends BaseMojo {
     }
 
     private void unzip() throws MojoFailureException, IOException {
-        ZipUtil.unpack( Paths.get( target + ".zip" ).toFile(), Paths.get( target ).toFile() );
-        Files.delete( Paths.get( target + ".zip" ) );
-        List< Path > portalExports = Find.Search( "Portal*", target, 1 );
+        ZipUtil.unpack( Paths.get( portalSrc + ".zip" ).toFile(), Paths.get( portalSrc ).toFile() );
+        Files.delete( Paths.get( portalSrc + ".zip" ) );
+        List< Path > portalExports = Find.Search( "Portal*", portalSrc, 1 );
 
         Collections.sort( portalExports, new Comparator< Path >() {
             public int compare( Path o1, Path o2 ) {
@@ -100,9 +100,9 @@ public class ExportPortal extends BaseMojo {
             }
         } );
 
-        Files.move( portalExports.get( 0 ), Paths.get( Paths.get( target ).toString(), artifactId ), StandardCopyOption.REPLACE_EXISTING );
+        Files.move( portalExports.get( 0 ), Paths.get( Paths.get( portalSrc ).toString(), artifactId ), StandardCopyOption.REPLACE_EXISTING );
 
-        List< Path > zipFiles = Find.Search( "*.zip", target );
+        List< Path > zipFiles = Find.Search( "*.zip", portalSrc );
         for ( Path zipFile : zipFiles ) {
             ZipUtil.unpack( zipFile.toFile(), Paths.get( zipFile.toString().replace( ".zip", "" ) ).toFile() );
             Files.delete( zipFile );
@@ -112,8 +112,8 @@ public class ExportPortal extends BaseMojo {
 
     private void export() throws IOException, ParserConfigurationException, SAXException {
         String exportUrl = portalUrl + exportPath;
-        FileUtils.forceDelete( new File( target ) );
-        File file = new File( target + ".zip" );
+        FileUtils.forceDelete( new File( portalSrc ) );
+        File file = new File( portalSrc + ".zip" );
         String reqBody = String.format( exportRequestBody, portalName, includeContents, includeGroups );
         HttpPost httpPost = new HttpPost( exportUrl );
         httpPost.setHeader( "Cookie", cookies.getValue() );

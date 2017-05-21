@@ -35,30 +35,26 @@ public class ImportPortal extends BaseMojo {
     @Parameter( property = "artifactId", required = true )
     public String artifactId;
 
-    String outputDir;
-    String parentSrc;
-    String finalName;
+    public String outputDir;
+    private String parentSrc;
 
     @Override
     public void execute() throws MojoFailureException, MojoExecutionException {
-        outputDir = project.getModel().getBuild().getDirectory();
+        outputDir = outputDir == null ? project.getModel().getBuild().getDirectory() : outputDir;
         parentSrc = Paths.get( portalSrc ).getFileName().toString();
-        finalName = project.getArtifactId() + "-" + project.getVersion();
+        File result;
+
         try {
-            buildZipFile();
+            result = buildZipFile().toFile();
         } catch ( IOException e ) {
             throw new MojoFailureException( e, "Building zip failed", e.getMessage() );
         }
-
-
-        File file = Paths.get( outputDir, finalName + ".zip" ).toFile();
-
-        if ( !file.exists() )
+        if ( !result.exists() )
             throw new MojoExecutionException( outputDir + ".zip" + " does not exists!" );
         buildPortalUrl();
         try {
             login();
-            upload( file );
+            upload( result );
             cleanup();
         } catch ( IOException | InterruptedException e ) {
             throw new MojoExecutionException( "Error in Portal Rest Call " + e );
@@ -75,9 +71,8 @@ public class ImportPortal extends BaseMojo {
         return result;
     }
 
-    private void buildZipFile() throws IOException {
+    private Path buildZipFile() throws IOException {
         List< Path > search = Find.Search( "*", portalSrc + "/" + artifactId, 1 );
-
 
         String innerTmpDir = outputDir + "/" + parentSrc + "/" + artifactId;
         String tmpDir = outputDir + "/" + parentSrc;
@@ -93,7 +88,9 @@ public class ImportPortal extends BaseMojo {
         ZipUtil.pack( Paths.get( portalSrc, artifactId, "contentservices" ).toFile(), Paths.get( innerTmpDir, "contentservices.zip" ).toFile() );
         Files.copy( Paths.get( portalSrc, artifactId, "portalserver.xml" ), Paths.get( innerTmpDir, "portalserver.xml" ), StandardCopyOption.REPLACE_EXISTING );
         Files.copy( Paths.get( portalSrc, "metadata.xml" ), Paths.get( tmpDir, "metadata.xml" ), StandardCopyOption.REPLACE_EXISTING );
-        ZipUtil.pack( Paths.get( tmpDir ).toFile(), Paths.get( outputDir, finalName + ".zip" ).toFile() );
+        Path result = Paths.get( outputDir, parentSrc + ".zip" );
+        ZipUtil.pack( Paths.get( tmpDir ).toFile(), result.toFile() );
+        return result;
     }
 
     private void upload( File file ) throws IOException, MojoExecutionException, InterruptedException {

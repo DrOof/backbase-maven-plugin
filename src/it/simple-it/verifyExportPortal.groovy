@@ -1,7 +1,7 @@
 import com.backbase.maven.plugins.ExportPortal
 
 def exportPortal = new ExportPortal()
-exportPortal.target= "/Users/jahan/projects/westpac/bb-fe/collection-wnzl-portal/src/main/resources/collection-wnzl-portal"
+exportPortal.portalSrc= "/Users/jahan/projects/westpac/bb-fe/collection-wnzl-portal/src/main/resources/collection-wnzl-portal"
 exportPortal.username="admin"
 exportPortal.password="admin"
 exportPortal.portalProtocol="http"
