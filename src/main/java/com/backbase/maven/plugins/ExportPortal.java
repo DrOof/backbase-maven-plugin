@@ -19,6 +19,9 @@ import org.zeroturnaround.zip.ZipUtil;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.transform.*;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
 import java.io.*;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
@@ -34,6 +37,10 @@ public class ExportPortal extends BaseMojo {
      */
     @Parameter( property = "portal.src", required = true )
     public String portalSrc;
+
+    public String getPortalSrcZip() {
+        return portalSrc + ".zip";
+    }
 
     /**
      * portal name
@@ -78,14 +85,17 @@ public class ExportPortal extends BaseMojo {
             export();
             unzip();
             cleanup();
-        } catch ( IOException | ParserConfigurationException | SAXException e ) {
+        } catch ( Exception e ) {
             throw new MojoExecutionException( "" + e );
         }
     }
 
-    private void unzip() throws MojoFailureException, IOException {
-        ZipUtil.unpack( Paths.get( portalSrc + ".zip" ).toFile(), Paths.get( portalSrc ).toFile() );
-        Files.delete( Paths.get( portalSrc + ".zip" ) );
+    private void unzip() throws MojoFailureException, IOException, ParserConfigurationException, SAXException, TransformerException {
+
+        ZipUtil.unpack( Paths.get( getPortalSrcZip() ).toFile(), Paths.get( portalSrc ).toFile() );
+        Path metadataXmlPath = Paths.get( portalSrc, "metadata.xml" );
+
+        Files.delete( Paths.get( getPortalSrcZip() ) );
         List< Path > portalExports = Find.Search( "Portal*", portalSrc, 1 );
 
         Collections.sort( portalExports, new Comparator< Path >() {
@@ -107,13 +117,26 @@ public class ExportPortal extends BaseMojo {
             ZipUtil.unpack( zipFile.toFile(), Paths.get( zipFile.toString().replace( ".zip", "" ) ).toFile() );
             Files.delete( zipFile );
         }
+
+        DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
+        DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
+        Document doc = dBuilder.parse( metadataXmlPath.toFile() );
+        doc.getElementsByTagName( "packageId" ).item( 0 ).setTextContent( artifactId );
+
+        Transformer tf = TransformerFactory.newInstance().newTransformer();
+        tf.setOutputProperty( OutputKeys.INDENT, "no" );
+        tf.setOutputProperty( OutputKeys.METHOD, "xml" );
+        DOMSource domSource = new DOMSource( doc );
+        StreamResult sr = new StreamResult( metadataXmlPath.toFile() );
+        tf.transform( domSource, sr );
+
         getLog().info( "Unzip the downloaded portal finished" );
     }
 
     private void export() throws IOException, ParserConfigurationException, SAXException {
         String exportUrl = portalUrl + exportPath;
         FileUtils.forceDelete( new File( portalSrc ) );
-        File file = new File( portalSrc + ".zip" );
+        File file = new File( getPortalSrcZip() );
         String reqBody = String.format( exportRequestBody, portalName, includeContents, includeGroups );
         HttpPost httpPost = new HttpPost( exportUrl );
         httpPost.setHeader( "Cookie", cookies.getValue() );
