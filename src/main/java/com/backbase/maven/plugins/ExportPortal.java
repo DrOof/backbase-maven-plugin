@@ -1,6 +1,16 @@
 package com.backbase.maven.plugins;
 
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.core.JsonToken;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
+import com.fasterxml.jackson.databind.node.TextNode;
+import com.google.common.html.HtmlEscapers;
+import com.sun.scenario.effect.impl.sw.java.JSWBlend_SRC_OUTPeer;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.StringEscapeUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
@@ -11,7 +21,10 @@ import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugins.annotations.*;
 import org.codehaus.plexus.util.IOUtil;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Entities;
 import org.w3c.dom.Document;
+import org.jsoup.nodes.Element;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 import org.zeroturnaround.zip.ZipUtil;
@@ -84,9 +97,42 @@ public class ExportPortal extends BaseMojo {
             login();
             export();
             unzip();
+            transform();
             cleanup();
         } catch ( Exception e ) {
             throw new MojoExecutionException( "" + e );
+        }
+    }
+
+    private void transform() throws IOException {
+        List< Path > search = Find.Search( "*", portalSrc + "/" + artifactId, 1 );
+
+        Path contentPath = null;
+        for ( Path path : search ) {
+            if ( parseUUID( path.getFileName().toString() ) ) {
+                contentPath = Paths.get( path.toString(), "content" );
+                break;
+            }
+        }
+        File[] contentFiles = contentPath.toFile().listFiles();
+        for ( File content : contentFiles ) {
+            if ( isValidJSON( content ) ) {
+                MAPPER.setNodeFactory( new JsonNodeFactory() {
+                    @Override
+                    public TextNode textNode( String text ) {
+                        try {
+                            TextNode jsonNodes = super.textNode( transformJson( text ) );
+                            return jsonNodes;
+                        } catch ( IOException e ) {
+                            e.printStackTrace();
+                            return null;
+                        }
+                    }
+                } );
+                JsonNode node = MAPPER.readTree( content );
+
+                Files.write( content.toPath(), node.toString().getBytes() );
+            }
         }
     }
 
@@ -129,8 +175,22 @@ public class ExportPortal extends BaseMojo {
         DOMSource domSource = new DOMSource( doc );
         StreamResult sr = new StreamResult( metadataXmlPath.toFile() );
         tf.transform( domSource, sr );
-
         getLog().info( "Unzip the downloaded portal finished" );
+    }
+
+    private String transformJson( String jsonText ) throws IOException {
+        org.jsoup.nodes.Document doc = Jsoup.parseBodyFragment( jsonText );
+        doc.outputSettings().prettyPrint( false );
+        doc.outputSettings().escapeMode( Entities.EscapeMode.base );
+        for ( Element e : doc.body().children() ) {
+            if ( e.hasText() ) {
+                String encodedText = StringEscapeUtils.escapeHtml4( StringEscapeUtils.unescapeHtml4( e.text() ) );
+                e.text( encodedText );
+            }
+        }
+
+        String result = StringEscapeUtils.unescapeHtml4( doc.body().toString().replace( "<body>", "" ).replace( "</body>", "" ) );
+        return result;
     }
 
     private void export() throws IOException, ParserConfigurationException, SAXException {

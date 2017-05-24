@@ -61,16 +61,6 @@ public class ImportPortal extends BaseMojo {
         }
     }
 
-    private boolean parseUUID( String uuid ) {
-        boolean result = true;
-        try {
-            UUID.fromString( uuid );
-        } catch ( Exception e ) {
-            result = false;
-        }
-        return result;
-    }
-
     private Path buildZipFile() throws IOException {
         List< Path > search = Find.Search( "*", portalSrc + "/" + artifactId, 1 );
 
@@ -85,7 +75,9 @@ public class ImportPortal extends BaseMojo {
                 break;
             }
         }
-        ZipUtil.pack( Paths.get( portalSrc, artifactId, "contentservices" ).toFile(), Paths.get( innerTmpDir, "contentservices.zip" ).toFile() );
+        File contentServices = Paths.get( portalSrc, artifactId, "contentservices" ).toFile();
+        if ( contentServices.exists() )
+            ZipUtil.pack( contentServices, Paths.get( innerTmpDir, "contentservices.zip" ).toFile() );
         Files.copy( Paths.get( portalSrc, artifactId, "portalserver.xml" ), Paths.get( innerTmpDir, "portalserver.xml" ), StandardCopyOption.REPLACE_EXISTING );
         Files.copy( Paths.get( portalSrc, "metadata.xml" ), Paths.get( tmpDir, "metadata.xml" ), StandardCopyOption.REPLACE_EXISTING );
         Path result = Paths.get( outputDir, parentSrc + ".zip" );
