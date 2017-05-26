@@ -181,15 +181,9 @@ public class ExportPortal extends BaseMojo {
     private String transformJson( String jsonText ) throws IOException {
         org.jsoup.nodes.Document doc = Jsoup.parseBodyFragment( jsonText );
         doc.outputSettings().prettyPrint( false );
-        doc.outputSettings().escapeMode( Entities.EscapeMode.base );
-        for ( Element e : doc.body().children() ) {
-            if ( e.hasText() ) {
-                String encodedText = StringEscapeUtils.escapeHtml4( StringEscapeUtils.unescapeHtml4( e.text() ) );
-                e.text( encodedText );
-            }
-        }
+        doc.outputSettings().escapeMode( Entities.EscapeMode.extended );
 
-        String result = StringEscapeUtils.unescapeHtml4( doc.body().toString().replace( "<body>", "" ).replace( "</body>", "" ) );
+        String result = doc.body().toString().replace( "<body>", "" ).replace( "</body>", "" );
         return result;
     }
 
