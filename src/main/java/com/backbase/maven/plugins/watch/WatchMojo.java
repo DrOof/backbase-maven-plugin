@@ -122,7 +122,7 @@ public class WatchMojo extends AbstractMojo {
         }
 
         long longTimeout = 60 * 60 * 24 * 1000L;
-        long shortTimeout = 100L;
+        long shortTimeout = 1L;
         long timeout = longTimeout;
         int dueToRunGoal = 0;
 
