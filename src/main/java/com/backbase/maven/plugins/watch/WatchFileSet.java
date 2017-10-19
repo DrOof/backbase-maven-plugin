@@ -17,7 +17,7 @@ public class WatchFileSet extends FileSet {
         return recursive;
     }
 
-    public void setRecursive(boolean recursive) {
+    public void setRecursive( boolean recursive ) {
         this.recursive = recursive;
     }
 

@@ -18,6 +18,10 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.security.KeyManagementException;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.cert.CertificateException;
 import java.util.List;
 import java.util.UUID;
 
@@ -37,6 +41,10 @@ public class ImportPortal extends BaseMojo {
 
     public String outputDir;
     private String parentSrc;
+
+    ImportPortal() throws IOException, CertificateException, NoSuchAlgorithmException, KeyStoreException, KeyManagementException {
+        super();
+    }
 
     @Override
     public void execute() throws MojoFailureException, MojoExecutionException {

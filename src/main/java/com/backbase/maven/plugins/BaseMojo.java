@@ -1,7 +1,6 @@
 package com.backbase.maven.plugins;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.http.Header;
@@ -12,6 +11,7 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.impl.client.BasicCookieStore;
 import org.apache.http.impl.client.HttpClientBuilder;
+import org.apache.http.ssl.SSLContexts;
 import org.apache.http.util.EntityUtils;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
@@ -22,22 +22,29 @@ import org.apache.maven.plugins.annotations.Component;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.project.MavenProject;
 
+import javax.net.ssl.SSLContext;
 import java.io.CharConversionException;
 import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.security.GeneralSecurityException;
+import java.security.KeyManagementException;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.cert.CertificateException;
 import java.util.UUID;
 
 public abstract class BaseMojo extends AbstractMojo {
 
     HttpClient httpclient;
-    CookieStore httpCookieStore;
 
-    protected final static ObjectMapper MAPPER = new ObjectMapper();
+    private CookieStore httpCookieStore;
+
+    final static ObjectMapper MAPPER = new ObjectMapper();
 
     @Parameter( readonly = true, defaultValue = "${project}" )
-    protected MavenProject project;
+    MavenProject project;
 
     @Component
     protected PluginPrefixResolver pluginPrefixResolver;
@@ -63,19 +70,34 @@ public abstract class BaseMojo extends AbstractMojo {
     @Parameter( property = "portal.password", defaultValue = "admin" )
     public String password;
 
+    @Parameter( property = "javax.net.ssl.trustStore" )
+    public String trustStorePath;
+
+    @Parameter( property = "javax.net.ssl.trustStorePassword", defaultValue = "changeit" )
+    public String trustStorePassword;
+
     URL portalUrl;
 
     Header cookies;
 
     Header csrfToken;
 
-    BaseMojo() {
+    BaseMojo() throws IOException, CertificateException, NoSuchAlgorithmException, KeyStoreException, KeyManagementException {
         httpCookieStore = new BasicCookieStore();
         HttpClientBuilder builder = HttpClientBuilder.create().setDefaultCookieStore( httpCookieStore );
+
+        if ( trustStorePath != null ) {
+            SSLContext sslContext = SSLContexts.custom()
+                    .useProtocol( "https" )
+                    .loadTrustMaterial( new URL( trustStorePath ), trustStorePassword.toCharArray() )
+                    .build();
+            builder.setSSLContext( sslContext );
+        }
+
         httpclient = builder.build();
     }
 
-    public boolean parseUUID( String uuid ) {
+    boolean parseUUID( String uuid ) {
         boolean result = true;
         try {
             UUID.fromString( uuid );
@@ -88,7 +110,7 @@ public abstract class BaseMojo extends AbstractMojo {
     public static boolean isValidJSON( final File file ) throws IOException {
         boolean valid = true;
         try {
-            JsonNode jsonNode = MAPPER.readTree( file );
+            MAPPER.readTree( file );
         } catch ( JsonProcessingException | CharConversionException e ) {
             valid = false;
         }
