@@ -38,6 +38,10 @@ import javax.xml.transform.stream.StreamResult;
 import java.io.*;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.security.KeyManagementException;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.cert.CertificateException;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -50,6 +54,10 @@ public class ExportPortal extends BaseMojo {
      */
     @Parameter( property = "portal.src", required = true )
     public String portalSrc;
+
+    ExportPortal() throws IOException, CertificateException, NoSuchAlgorithmException, KeyStoreException, KeyManagementException {
+        super();
+    }
 
     public String getPortalSrcZip() {
         return portalSrc + ".zip";

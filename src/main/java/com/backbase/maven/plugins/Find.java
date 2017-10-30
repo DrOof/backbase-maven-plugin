@@ -1,23 +1,17 @@
 package com.backbase.maven.plugins;
 
-import org.apache.maven.plugin.MojoFailureException;
-
-import java.io.*;
+import java.io.IOException;
 import java.nio.file.*;
-import java.nio.file.attribute.*;
+import java.nio.file.attribute.BasicFileAttributes;
+import java.util.ArrayList;
+import java.util.EnumSet;
+import java.util.List;
 
-import static java.nio.file.FileVisitResult.*;
+import static java.nio.file.FileVisitResult.CONTINUE;
 
-import java.util.*;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipInputStream;
-import java.util.zip.ZipOutputStream;
+class Find {
 
-
-public class Find {
-
-    private static class Finder
-            extends SimpleFileVisitor< Path > {
+    private static class Finder extends SimpleFileVisitor< Path > {
 
         private PathMatcher matcher;
         ArrayList< Path > files = new ArrayList<>();
@@ -84,5 +78,4 @@ public class Find {
         Files.walkFileTree( Paths.get( path ), finder );
         return finder.search();
     }
-
 }

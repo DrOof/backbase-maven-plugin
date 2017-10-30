@@ -11,6 +11,10 @@ import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 
 import java.io.IOException;
+import java.security.KeyManagementException;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.cert.CertificateException;
 
 /**
  * Goal which imports basic widgets and dashboard.
@@ -24,6 +28,10 @@ public class ImportDashboard extends BaseMojo {
     private static final String importPath = "/import/";
 
     private String basicWidgetList;
+
+    ImportDashboard() throws IOException, CertificateException, NoSuchAlgorithmException, KeyStoreException, KeyManagementException {
+        super();
+    }
 
     @Override
     public void execute() throws MojoFailureException, MojoExecutionException {
@@ -54,5 +62,4 @@ public class ImportDashboard extends BaseMojo {
         HttpResponse response = httpclient.execute( httpPost );
         handleResponse( response, httpPost );
     }
-
 }
