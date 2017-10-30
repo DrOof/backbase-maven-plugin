@@ -55,10 +55,6 @@ public class ExportPortal extends BaseMojo {
     @Parameter( property = "portal.src", required = true )
     public String portalSrc;
 
-    ExportPortal() throws IOException, CertificateException, NoSuchAlgorithmException, KeyStoreException, KeyManagementException {
-        super();
-    }
-
     public String getPortalSrcZip() {
         return portalSrc + ".zip";
     }
@@ -99,7 +95,7 @@ public class ExportPortal extends BaseMojo {
 
     @Override
     public void execute() throws MojoFailureException, MojoExecutionException {
-
+        super.execute();
         buildPortalUrl();
         try {
             login();

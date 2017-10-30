@@ -29,12 +29,9 @@ public class ImportDashboard extends BaseMojo {
 
     private String basicWidgetList;
 
-    ImportDashboard() throws IOException, CertificateException, NoSuchAlgorithmException, KeyStoreException, KeyManagementException {
-        super();
-    }
-
     @Override
     public void execute() throws MojoFailureException, MojoExecutionException {
+        super.execute();
         prepareUrl();
         buildPortalUrl();
         try {

@@ -19,6 +19,10 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.security.KeyManagementException;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.cert.CertificateException;
 import java.util.List;
 
 /**
@@ -32,7 +36,10 @@ public class DeletePortal extends BaseMojo {
 
     @Override
     public void execute() throws MojoFailureException, MojoExecutionException {
+        super.execute();
         try {
+            buildPortalUrl();
+            login();
             delete();
         } catch ( IOException | InterruptedException e ) {
             throw new MojoExecutionException( e.getMessage(), e );

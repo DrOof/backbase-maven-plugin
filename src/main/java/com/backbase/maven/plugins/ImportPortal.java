@@ -40,14 +40,12 @@ public class ImportPortal extends BaseMojo {
     public String artifactId;
 
     public String outputDir;
-    private String parentSrc;
 
-    ImportPortal() throws IOException, CertificateException, NoSuchAlgorithmException, KeyStoreException, KeyManagementException {
-        super();
-    }
+    private String parentSrc;
 
     @Override
     public void execute() throws MojoFailureException, MojoExecutionException {
+        super.execute();
         outputDir = outputDir == null ? project.getModel().getBuild().getDirectory() : outputDir;
         parentSrc = Paths.get( portalSrc ).getFileName().toString();
         File result;

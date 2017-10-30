@@ -11,6 +11,7 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.impl.client.BasicCookieStore;
 import org.apache.http.impl.client.HttpClientBuilder;
+import org.apache.http.ssl.SSLContextBuilder;
 import org.apache.http.ssl.SSLContexts;
 import org.apache.http.util.EntityUtils;
 import org.apache.maven.plugin.AbstractMojo;
@@ -82,21 +83,6 @@ public abstract class BaseMojo extends AbstractMojo {
 
     Header csrfToken;
 
-    BaseMojo() throws IOException, CertificateException, NoSuchAlgorithmException, KeyStoreException, KeyManagementException {
-        httpCookieStore = new BasicCookieStore();
-        HttpClientBuilder builder = HttpClientBuilder.create().setDefaultCookieStore( httpCookieStore );
-
-        if ( trustStorePath != null ) {
-            SSLContext sslContext = SSLContexts.custom()
-                    .useProtocol( "https" )
-                    .loadTrustMaterial( new URL( trustStorePath ), trustStorePassword.toCharArray() )
-                    .build();
-            builder.setSSLContext( sslContext );
-        }
-
-        httpclient = builder.build();
-    }
-
     boolean parseUUID( String uuid ) {
         boolean result = true;
         try {
@@ -117,7 +103,25 @@ public abstract class BaseMojo extends AbstractMojo {
         return valid;
     }
 
-    public abstract void execute() throws MojoExecutionException, MojoFailureException;
+    public void execute() throws MojoExecutionException, MojoFailureException {
+        httpCookieStore = new BasicCookieStore();
+        HttpClientBuilder clientBuilder = HttpClientBuilder.create().setDefaultCookieStore( httpCookieStore );
+        if ( trustStorePath != null ) {
+            SSLContext sslContext;
+            try {
+                URL url = new File( trustStorePath ).toURI().toURL();
+                sslContext = SSLContextBuilder
+                        .create()
+                        .loadTrustMaterial( url, trustStorePassword.toCharArray() )
+                        .build();
+            } catch ( NoSuchAlgorithmException | KeyManagementException | KeyStoreException | CertificateException | IOException e ) {
+                throw new MojoExecutionException( "", e );
+            }
+            clientBuilder.setSSLContext( sslContext );
+        }
+
+        httpclient = clientBuilder.build();
+    }
 
     void cleanup() {
         httpCookieStore.clear();
@@ -149,7 +153,7 @@ public abstract class BaseMojo extends AbstractMojo {
 
     void handleResponse( HttpResponse response, HttpRequestBase request ) throws IOException, MojoExecutionException {
         int statusCode = response.getStatusLine().getStatusCode();
-        if ( statusCode >= 300 ) {
+        if ( statusCode >= 400 ) {
             String content = EntityUtils.toString( response.getEntity(), "UTF-8" );
             getLog().error( content );
             throw new MojoExecutionException( content );
