@@ -127,7 +127,7 @@ public abstract class BaseMojo extends AbstractMojo {
 
     void handleResponse( HttpResponse response, HttpRequestBase request ) throws IOException, MojoExecutionException {
         int statusCode = response.getStatusLine().getStatusCode();
-        if ( statusCode >= 400 ) {
+        if ( statusCode >= 300 ) {
             String content = EntityUtils.toString( response.getEntity(), "UTF-8" );
             getLog().error( content );
             throw new MojoExecutionException( content );
