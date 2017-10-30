@@ -27,7 +27,7 @@ import java.util.List;
 @Mojo( name = "delete-portal", defaultPhase = LifecyclePhase.PROCESS_SOURCES )
 public class DeletePortal extends BaseMojo {
 
-    @Parameter( property = "portalName", defaultValue = "business", required = true )
+    @Parameter( property = "portalName", required = true )
     public String portalName;
 
     @Override
