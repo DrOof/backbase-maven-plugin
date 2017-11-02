@@ -4,7 +4,7 @@
 
     <groupId>com.backbase.maven.plugins</groupId>
     <artifactId>backbase-maven-plugin</artifactId>
-    <version>1.0.1-SNAPSHOT</version>
+    <version>1.0.1</version>
     <packaging>maven-plugin</packaging>
 
     <name>backbase-maven-plugin</name>
