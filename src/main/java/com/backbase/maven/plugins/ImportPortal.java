@@ -91,7 +91,7 @@ public class ImportPortal extends BaseMojo {
         return result;
     }
 
-    private void upload( File file ) throws IOException, MojoExecutionException, InterruptedException {
+    private void upload( File file ) throws IOException, InterruptedException, MojoFailureException {
         String importUrl = portalUrl + importPath;
         HttpPost httpPost = new HttpPost( importUrl );
         HttpEntity reqEntity = MultipartEntityBuilder

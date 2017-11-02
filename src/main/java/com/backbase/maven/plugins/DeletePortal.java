@@ -46,7 +46,7 @@ public class DeletePortal extends BaseMojo {
         }
     }
 
-    private void delete() throws IOException, MojoExecutionException, InterruptedException {
+    private void delete() throws IOException, InterruptedException, MojoFailureException {
         String importUrl = portalUrl + "/portals/" + portalName + "/deletePortal";
         HttpDelete httpDelete = new HttpDelete( importUrl );
         httpDelete.setHeader( "Cookie", cookies.getValue() );

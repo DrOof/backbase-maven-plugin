@@ -71,6 +71,9 @@ public abstract class BaseMojo extends AbstractMojo {
     @Parameter( property = "portal.password", defaultValue = "admin" )
     public String password;
 
+    @Parameter( property = "failOnException", defaultValue = "true" )
+    public String failOnException;
+
     @Parameter( property = "javax.net.ssl.trustStore" )
     public String trustStorePath;
 
@@ -151,12 +154,13 @@ public abstract class BaseMojo extends AbstractMojo {
         }
     }
 
-    void handleResponse( HttpResponse response, HttpRequestBase request ) throws IOException, MojoExecutionException {
+    void handleResponse( HttpResponse response, HttpRequestBase request ) throws IOException, MojoFailureException {
         int statusCode = response.getStatusLine().getStatusCode();
         if ( statusCode >= 400 ) {
             String content = EntityUtils.toString( response.getEntity(), "UTF-8" );
             getLog().error( content );
-            throw new MojoExecutionException( content );
+            if ( failOnException.equalsIgnoreCase( "true" ) ) throw new MojoFailureException( content );
+            else getLog().error( content );
         } else {
             getLog().info( "Succeeded with " + statusCode + " response code" );
             refreshCookies( response );
